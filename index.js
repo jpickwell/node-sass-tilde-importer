@@ -73,7 +73,7 @@ function importsToResolve (url) {
     return imports
   }
 
-  dirName = path.dirName(request)
+  dirName = path.dirname(request)
 
   imports.unshift(
     dirName + '/_' + baseName + '.scss',
