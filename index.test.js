@@ -1,8 +1,10 @@
-var importer
+var EXT_COMBO_COUNT, importer, mockImporterResolve
 
-
+EXT_COMBO_COUNT = 6
 
 importer = require('./')
+
+importer.resolve = mockImporterResolve = jest.fn()
 
 function importerExpect (url, prev, expectation, done) {
   var res
@@ -19,81 +21,118 @@ function importerExpect (url, prev, expectation, done) {
   }
 }
 
+function resolveError () {
+  throw new Error()
+}
+
 describe('Importer', function () {
   beforeEach(function () {
-    // mockFs.existsSync.mockClear()
-    // mockFindParentDir.sync.mockReturnValue('MOCK_PARENT_DIR').mockClear()
+    mockImporterResolve.mockClear()
   });
 
   test('resolves to node_modules directory when first character is ~', function (done) {
-    // mockFs.existsSync.mockReturnValue(true)
+    var path
 
-    importerExpect('~my-module', '', { file: __dirname + '/MOCK_PARENT_DIR/node_modules/my-module/index' }, done)
+    path = '/MOCK_PARENT_DIR/node_modules/my-module/index.js'
+
+    mockImporterResolve.mockReturnValue(path)
+
+    importerExpect('~my-module', '', { file: path }, done)
   })
 
   test("does nothing when the first character isn't a ~", function (done) {
     importerExpect('my-module', '', null, done)
   })
 
-  test('recursively resolve url until package has not been found', function (done) {
-    // var i, mockFsCheck, mockParentDirFinder
+  test('recursively resolve url until package has been found', function (done) {
+    var i, path
 
-    // mockFsCheck = mockFs.existsSync
-    // mockParentDirFinder = mockFindParentDir.sync
+    // url isn't a Sass/CSS file
+    for (i = 0; i < EXT_COMBO_COUNT; ++i) {
+      mockImporterResolve.mockImplementationOnce(resolveError)
+    }
 
-    // url can not be resolved up to 10 level
-    // for (i = 0; i < 10; ++i) {
-    //   mockFsCheck = mockFsCheck
-    //     .mockReturnValueOnce(false) // directory import
-    //     .mockReturnValueOnce(false) // file import
-    //
-    //   mockParentDirFinder = mockParentDirFinder.mockReturnValueOnce('MOCK_PARENT_DIR' + i)
-    // }
+    path = '/MOCK_PARENT_DIR/node_modules/~my-module/test'
 
-    // url finally found
-    // mockFsCheck = mockFsCheck.mockReturnValueOnce(false).mockReturnValueOnce(true)
-    // mockParentDirFinder = mockParentDirFinder.mockReturnValueOnce('MOCK_PARENT_DIR_final')
+    // url is literal; i.e., `~my-module` is the name of a module, so `~my-module/test` should be
+    // `node_modules/~my-module/test`
+    mockImporterResolve.mockImplementation(function () {
+      return path
+    })
 
-    importerExpect(
-      '~my-module/test', '', { file: __dirname + '/MOCK_PARENT_DIR_final/node_modules/my-module/test' },
-      function () {
-        // expect(mockParentDirFinder.mock.calls.length).toBe(11)
-        // expect(mockFsCheck.mock.calls.length).toBe(22)
-        done()
-      }
-    )
+    importerExpect('~my-module/test', '', { file: path }, done)
   })
 
-  test('return original url when package file can not be resolved', function (done) {
+  test('return original url when package file cannot be resolved', function (done) {
     var url
-    // mockFindParentDir.sync.mockReturnValue(null)
+
+    mockImporterResolve.mockImplementation(resolveError)
 
     url = '~my-module'
 
     importerExpect(url, '', { file: url }, done)
   })
 
-  test('should resolve extensions', function (done) {
-    // mockFs.existsSync.mockReturnValueOnce(true)
+  test('should resolve extensions (.css)', function (done) {
+    var path
 
-    importerExpect(
-      '~my-module/test.scss', '', { file: __dirname + '/MOCK_PARENT_DIR/node_modules/my-module/test.scss' }, done
-    )
+    path = '/MOCK_PARENT_DIR/node_modules/my-module/test'
+
+    mockImporterResolve.mockReturnValue(path)
+
+    importerExpect('~my-module/test.css', '', { file: path }, done)
+  })
+
+  test('should resolve extensions (.scss)', function (done) {
+    var path
+
+    path = '/MOCK_PARENT_DIR/node_modules/my-module/test.scss'
+
+    mockImporterResolve.mockReturnValue(path)
+
+    importerExpect('~my-module/test.scss', '', { file: path }, done)
+  })
+
+  test('should resolve extensions (.sass)', function (done) {
+    var path
+
+    path = '/MOCK_PARENT_DIR/node_modules/my-module/test.sass'
+
+    mockImporterResolve.mockReturnValue(path)
+
+    importerExpect('~my-module/test.sass', '', { file: path }, done)
   })
 
   test('should support file imports', function (done) {
-    // mockFs.existsSync
-    //   .mockReturnValueOnce(false) // directory import
-    //   .mockReturnValueOnce(true) // file import
+    var path
 
-    importerExpect('~my-module/test', '', { file: __dirname + '/MOCK_PARENT_DIR/node_modules/my-module/test' }, done)
+    path = '/MOCK_PARENT_DIR/node_modules/my-module/_test.scss'
+
+    mockImporterResolve.mockReturnValue(path)
+
+    importerExpect('~my-module/test', '', { file: path }, done)
   })
 
-  test('should support directory imports', function (done) {
-    // mockFs.existsSync.mockReturnValueOnce(true) // directory import
+  test('should support partial imports', function (done) {
+    var path
 
-    importerExpect(
-      '~my-module/test', '', { file: __dirname + '/MOCK_PARENT_DIR/node_modules/my-module/test/index' }, done
-    )
+    path = '/MOCK_PARENT_DIR/node_modules/my-module/_test.scss'
+
+    mockImporterResolve.mockReturnValue(path)
+
+    importerExpect('~my-module/_test', '', { file: path }, done)
+  })
+
+  test('should use current working directory if stdin', function (done) {
+    var path
+
+    path = '/MOCK_PARENT_DIR/node_modules/my-module/index.js'
+
+    mockImporterResolve.mockReturnValue(path)
+
+    importerExpect('~my-module', 'stdin', { file: path }, function () {
+      expect(mockImporterResolve).toHaveBeenCalledWith('my-module', { paths: [process.cwd()] })
+      done()
+    })
   })
 })

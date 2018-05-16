@@ -8,24 +8,27 @@
 ## Install
 
 ```sh
-npm install node-sass-tilde-importer --save-dev
+npm install -D node-sass-tilde-importer
+# OR
+yarn add -D node-sass-tilde-importer
 ```
 
 ## Usage
 
 ```js
-var sass = require('node-sass');
-var tildeImporter = require('node-sass-tilde-importer');
+var sass = require('node-sass')
+var tildeImporter = require('node-sass-tilde-importer')
 
 var result = sass.renderSync({
   data: scss_content,
   importer: tildeImporter
-});
+})
 ```
 
-`node-sass` cli example:
+`node-sass` CLI example:
 ```sh
-node-sass style.scss --importer=node_modules/node-sass-tilde-importer
+node-sass --importer node_modules/node-sass-tilde-importer style.scss
 ```
 
-Please refer to the node-sass [readme](https://github.com/sass/node-sass#readme) for full instruction on how to use custom importers.
+Please refer to the node-sass [readme](https://github.com/sass/node-sass#readme) for full instructions on how to use
+custom importers.

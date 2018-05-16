@@ -5,7 +5,7 @@ path = require('path')
 function resolve (dir, importToResolve) {
   return new Promise(function (pResolve, pReject) {
     try {
-      pResolve(require.resolve(importToResolve, { paths: [dir] }))
+      pResolve(importer.resolve(importToResolve, { paths: [dir] }))
     } catch (ex) {
       pReject(ex)
     }
@@ -40,21 +40,10 @@ function importsToResolve (url) {
   // contains a dot.
   ext = path.extname(url)
 
-  // Test if the url is a node package main import.
-  if (/^~([^\/]+|@[^\/]+[\/][^\/]+)$/g.test(url)) {
-    return [request, url]
-  }
-
-  // libsass' import algorithm works like this:
-
-  // In case there is a file extension...
-  // - If the file is a CSS-file, do not include it all, but just link it via @import url().
-  // - The exact file name must match (no auto-resolving of '_'-modules).
-  if (ext === '.css') {
-    return []
-  }
-
-  if (ext === '.scss' || ext === '.sass') {
+  if (
+    /^~([^\/]+|@[^\/]+[\/][^\/]+)$/g.test(url) || // Test if the url is a node package main import.
+    ext === '.css' || ext === '.scss' || ext === '.sass' // In case there is a file extension.
+  ) {
     return [request, url]
   }
 
@@ -91,7 +80,7 @@ function importer (url, prev, done) {
   }
 
   startResolving(
-    path.dirname(prev),
+    prev === 'stdin' ? process.cwd() : path.dirname(prev),
     importsToResolve(url)
   )
     // Catch all resolving errors, return the original file and pass responsibility back to other custom importers.
@@ -100,5 +89,8 @@ function importer (url, prev, done) {
     })
     .then(done)
 }
+
+// Allows substituting require.resolve with a mock function because require.resolve cannot be mocked.
+importer.resolve = require.resolve
 
 module.exports = importer
