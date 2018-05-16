@@ -1,15 +1,10 @@
 {
   "name": "node-sass-tilde-importer",
   "version": "1.0.2",
-  "description": "A node-sass custom importer which turns ~ into absolute paths to the nearest parent node_modules directory.",
+  "author": "Matthew Davidson <matthew.davidson@skyscanner.net>",
+  "license": "Apache-2.0",
   "repository": "matthewdavidson/node-sass-tilde-importer",
-  "main": "index.js",
-  "scripts": {
-    "test": "jest --coverage"
-  },
-  "files": [
-    "index.js"
-  ],
+  "description": "A node-sass custom importer which turns ~ into absolute paths to the nearest parent node_modules directory.",
   "keywords": [
     "node-sass",
     "scss",
@@ -19,8 +14,11 @@
     "sass-loader",
     "node_modules"
   ],
-  "author": "Matthew Davidson <matthew.davidson@skyscanner.net>",
-  "license": "Apache-2.0",
+  "main": "index.js",
+  "files": ["index.js"],
+  "scripts": {
+    "test": "jest --coverage"
+  },
   "dependencies": {
     "find-parent-dir": "^0.3.0"
   },
